@@ -32,6 +32,15 @@ body {
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+select {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ===== App Layout ===== */
@@ -1701,6 +1710,13 @@ body {
     max-width: 220px;
     min-width: 0;
     flex: 0 1 auto;
+  }
+  /* 16px未満だとiOSがフォーカス時に自動ズームするため */
+  .top-bar-search,
+  input,
+  textarea,
+  select {
+    font-size: 1rem;
   }
   .top-bar-tab {
     flex: 1;
