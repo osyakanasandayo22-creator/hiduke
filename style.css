@@ -509,13 +509,6 @@ select {
   background: var(--primary);
   margin: 0 auto;
 }
-.calendar-close-btn {
-  width: 100%;
-  margin-top: 24px;
-  min-height: 52px;
-  flex-shrink: 0;
-}
-
 .section-title {
   margin: 0 0 16px;
   font-size: 1rem;
@@ -1623,11 +1616,6 @@ select {
 .interval-item-clickable:hover {
   background: var(--bg-subtle);
   border-color: var(--primary);
-}
-.interval-close-btn {
-  width: 100%;
-  margin-top: 20px;
-  min-height: 48px;
 }
 .interval-item .interval-badge {
   flex-shrink: 0;

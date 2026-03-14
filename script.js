@@ -39,7 +39,6 @@
   const intervalTimeline = document.getElementById('intervalTimeline');
   const intervalList = document.getElementById('intervalList');
   const closeIntervalBtn = document.getElementById('closeInterval');
-  const closeIntervalBtnBottom = document.getElementById('closeIntervalBtn');
   const autoDeletePastCheck = document.getElementById('autoDeletePast');
   const displayPeriodSelect = document.getElementById('displayPeriod');
   const optionRange = document.getElementById('optionRange');
@@ -64,7 +63,6 @@
   const calendarPrev = document.getElementById('calendarPrev');
   const calendarNext = document.getElementById('calendarNext');
   const closeCalendar = document.getElementById('closeCalendar');
-  const closeCalendarBtn = document.getElementById('closeCalendarBtn');
   const deleteConfirmOverlay = document.getElementById('deleteConfirmOverlay');
   const deleteConfirmBackdrop = document.getElementById('deleteConfirmBackdrop');
   const deleteConfirmCancel = document.getElementById('deleteConfirmCancel');
@@ -1041,7 +1039,6 @@
   }
 
   closeIntervalBtn.addEventListener('click', closeIntervalOverlay);
-  if (closeIntervalBtnBottom) closeIntervalBtnBottom.addEventListener('click', closeIntervalOverlay);
   if (intervalBackdrop) intervalBackdrop.addEventListener('click', closeIntervalOverlay);
 
   autoDeletePastCheck.addEventListener('change', function () {
@@ -1097,7 +1094,6 @@
 
   if (calendarBackdrop) calendarBackdrop.addEventListener('click', closeCalendarOverlay);
   if (closeCalendar) closeCalendar.addEventListener('click', closeCalendarOverlay);
-  if (closeCalendarBtn) closeCalendarBtn.addEventListener('click', closeCalendarOverlay);
   if (deleteConfirmBackdrop) deleteConfirmBackdrop.addEventListener('click', hideDeleteConfirm);
   if (deleteConfirmCancel) deleteConfirmCancel.addEventListener('click', hideDeleteConfirm);
   if (deleteConfirmOk) deleteConfirmOk.addEventListener('click', function () {
