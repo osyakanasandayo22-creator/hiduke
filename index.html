@@ -34,6 +34,7 @@
           <button type="button" class="top-bar-tab" id="tabCalendar" aria-controls="calendarOverlay">カレンダー</button>
           <button type="button" class="top-bar-tab" id="tabAdd" aria-controls="panelAdd">予定追加</button>
           <button type="button" class="top-bar-tab" id="tabRange" aria-controls="panelRange">表示期間</button>
+          <button type="button" class="top-bar-tab" id="tabDelete" aria-controls="panelDelete">削除</button>
         </div>
       </div>
     </nav>
@@ -133,6 +134,30 @@
                       <span>日数表示（例：17日）</span>
                     </label>
                   </div>
+                </div>
+              </div>
+            </section>
+            <!-- 予定の削除（全削除・範囲削除・選択削除） -->
+            <section class="drawer-content" id="panelDelete" aria-hidden="true">
+              <div class="delete-options">
+                <div class="delete-option-block">
+                  <span class="option-label">すべての予定を削除</span>
+                  <button type="button" class="btn btn-danger btn-block" id="deleteAllBtn">すべて削除する</button>
+                </div>
+                <div class="delete-option-block">
+                  <span class="option-label">日付範囲を指定して削除</span>
+                  <div class="delete-range-wrap">
+                    <input type="date" id="deleteRangeStart" class="input input-date-range" aria-label="開始日">
+                    <span>～</span>
+                    <input type="date" id="deleteRangeEnd" class="input input-date-range" aria-label="終了日">
+                  </div>
+                  <button type="button" class="btn btn-danger btn-block" id="deleteRangeBtn">この範囲の予定を削除</button>
+                </div>
+                <div class="delete-option-block">
+                  <span class="option-label">予定を選択して削除</span>
+                  <button type="button" class="btn btn-secondary btn-block" id="toggleSelectModeBtn">選択モードを開始</button>
+                  <p class="delete-select-hint hidden" id="deleteSelectHint">リストの予定をタップして選択し、下のボタンで削除</p>
+                  <button type="button" class="btn btn-danger btn-block hidden" id="deleteSelectedBtn">選択した<span id="deleteSelectedCount">0</span>件を削除</button>
                 </div>
               </div>
             </section>

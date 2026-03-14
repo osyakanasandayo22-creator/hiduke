@@ -302,6 +302,45 @@ select {
   display: none;
 }
 
+/* 予定の削除パネル */
+.delete-options {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.delete-option-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.delete-option-block .option-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.delete-range-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.delete-range-wrap .input-date-range {
+  flex: 1;
+  min-width: 0;
+}
+.btn-block {
+  width: 100%;
+}
+.delete-select-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+.delete-select-hint.hidden,
+#deleteSelectedBtn.hidden {
+  display: none !important;
+}
+
 /* ===== カレンダー表示（ページ全体・開閉アニメーション付き） ===== */
 .calendar-overlay {
   position: fixed;
@@ -1298,6 +1337,28 @@ select {
   color: #137333;
 }
 
+/* 削除選択モード時の予定カード */
+.event-item.delete-selectable {
+  cursor: pointer;
+}
+.event-item.delete-selectable .event-delete,
+.event-item.delete-selectable .event-edit-btn,
+.event-item.delete-selectable .event-important-btn {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.event-item.is-delete-selected {
+  border-color: var(--future);
+  background: rgba(234, 67, 53, 0.08);
+}
+.event-item-delete-checkbox {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
 /* ===== 間隔表示オーバーレイ（レイヤーで上にかぶせる） ===== */
 .interval-overlay {
   position: fixed;
@@ -1837,7 +1898,7 @@ select {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* スマホ：日付・重要・編集・削除を2行目に表示して予定名のスペースを確保 */
+  /* スマホ：日付・重要・編集・削除を2行目に表示して予定名のスペースを確保・右寄せ */
   .event-item .event-item-row2 {
     flex-basis: 100%;
     width: 100%;
@@ -1845,6 +1906,7 @@ select {
     padding-top: 8px;
     border-top: 1px solid var(--border);
     gap: 10px;
+    justify-content: flex-end;
   }
   .event-item .event-date {
     width: auto;

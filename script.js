@@ -49,9 +49,19 @@
   const intervalDisplayDays = document.getElementById('intervalDisplayDays');
   const tabAdd = document.getElementById('tabAdd');
   const tabRange = document.getElementById('tabRange');
+  const tabDelete = document.getElementById('tabDelete');
   const tabCalendar = document.getElementById('tabCalendar');
   const panelAdd = document.getElementById('panelAdd');
   const panelRange = document.getElementById('panelRange');
+  const panelDelete = document.getElementById('panelDelete');
+  const deleteAllBtn = document.getElementById('deleteAllBtn');
+  const deleteRangeStart = document.getElementById('deleteRangeStart');
+  const deleteRangeEnd = document.getElementById('deleteRangeEnd');
+  const deleteRangeBtn = document.getElementById('deleteRangeBtn');
+  const toggleSelectModeBtn = document.getElementById('toggleSelectModeBtn');
+  const deleteSelectHint = document.getElementById('deleteSelectHint');
+  const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+  const deleteSelectedCount = document.getElementById('deleteSelectedCount');
   const drawerOverlay = document.getElementById('drawerOverlay');
   const drawerBackdrop = document.getElementById('drawerBackdrop');
   const drawerBackBtn = document.getElementById('drawerBackBtn');
@@ -71,6 +81,11 @@
   const graphTooltip = document.getElementById('graphTooltip');
 
   let pendingDeleteId = null;
+  let pendingDeleteMode = null; // 'one' | 'all' | 'range' | 'selected'
+  let pendingDeleteRange = null; // { start, end }
+  let pendingDeleteIds = []; // for 'selected'
+  let deleteSelectionMode = false;
+  let selectedEventIds = new Set();
   let calendarYear = new Date().getFullYear();
   let calendarMonth = new Date().getMonth();
 
@@ -331,14 +346,97 @@
     renderList();
   }
 
+  function removeAllEvents() {
+    events = [];
+    selectedId = 'today';
+    saveEvents();
+    renderList();
+  }
+
+  function removeEventsByRange(startStr, endStr) {
+    var start = startStr;
+    var end = endStr;
+    if (start > end) { var t = start; start = end; end = t; }
+    events = events.filter(function (e) { return e.date < start || e.date > end; });
+    saveEvents();
+    renderList();
+  }
+
+  function removeEventsByIds(ids) {
+    var idSet = new Set(ids);
+    events = events.filter(function (e) { return !idSet.has(e.id); });
+    if (ids.indexOf(selectedId) !== -1) {
+      selectedId = 'today';
+    }
+    selectedEventIds.clear();
+    deleteSelectionMode = false;
+    updateDeleteSelectionUI();
+    saveEvents();
+    renderList();
+  }
+
   function showDeleteConfirm(eventId) {
+    pendingDeleteMode = 'one';
     pendingDeleteId = eventId;
+    pendingDeleteRange = null;
+    deleteConfirmTitle.textContent = 'この予定を削除しますか？';
+    deleteConfirmMessage.textContent = '削除すると元に戻せません。';
+    deleteConfirmOverlay.removeAttribute('aria-hidden');
+  }
+
+  function showBulkDeleteConfirm(mode, payload) {
+    pendingDeleteMode = mode;
+    pendingDeleteId = null;
+    if (mode === 'all') {
+      deleteConfirmTitle.textContent = 'すべての予定を削除しますか？';
+      deleteConfirmMessage.textContent = '登録されている予定がすべて削除され、元に戻せません。';
+    } else if (mode === 'range' && payload && payload.start && payload.end) {
+      var count = events.filter(function (e) { return e.date >= payload.start && e.date <= payload.end; }).length;
+      deleteConfirmTitle.textContent = 'この範囲の予定を削除しますか？';
+      deleteConfirmMessage.textContent = count + '件の予定を削除します。元に戻せません。';
+      pendingDeleteRange = { start: payload.start, end: payload.end };
+    } else if (mode === 'selected' && payload && payload.ids && payload.ids.length > 0) {
+      deleteConfirmTitle.textContent = '選択した予定を削除しますか？';
+      deleteConfirmMessage.textContent = payload.ids.length + '件の予定を削除します。元に戻せません。';
+      pendingDeleteIds = payload.ids.slice();
+    } else {
+      return;
+    }
     deleteConfirmOverlay.removeAttribute('aria-hidden');
   }
 
   function hideDeleteConfirm() {
     pendingDeleteId = null;
+    pendingDeleteMode = null;
+    pendingDeleteRange = null;
+    pendingDeleteIds = [];
     deleteConfirmOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function updateDeleteSelectionUI() {
+    if (!toggleSelectModeBtn) return;
+    if (deleteSelectionMode) {
+      toggleSelectModeBtn.textContent = '選択モードを終了';
+      if (deleteSelectHint) { deleteSelectHint.classList.remove('hidden'); }
+      if (deleteSelectedBtn) {
+        deleteSelectedBtn.classList.remove('hidden');
+        if (deleteSelectedCount) deleteSelectedCount.textContent = String(selectedEventIds.size);
+      }
+    } else {
+      toggleSelectModeBtn.textContent = '選択モードを開始';
+      if (deleteSelectHint) { deleteSelectHint.classList.add('hidden'); }
+      if (deleteSelectedBtn) deleteSelectedBtn.classList.add('hidden');
+    }
+  }
+
+  function toggleEventSelection(id) {
+    if (selectedEventIds.has(id)) {
+      selectedEventIds.delete(id);
+    } else {
+      selectedEventIds.add(id);
+    }
+    if (deleteSelectedCount) deleteSelectedCount.textContent = String(selectedEventIds.size);
+    renderList();
   }
 
   function getDiffInDays(dateStrA, dateStrB) {
@@ -730,8 +828,10 @@
       var days = getDiffInDays(ref.date, item.date);
       var info = formatInterval(days);
       var intervalText = info.text;
+      var isSelectable = deleteSelectionMode && item.id !== 'today';
+      var isSelected = selectedEventIds.has(item.id);
       var li = document.createElement('li');
-      li.className = 'event-item' + wdayClass + (item.important ? ' is-important' : '');
+      li.className = 'event-item' + wdayClass + (item.important ? ' is-important' : '') + (isSelectable ? ' delete-selectable' : '') + (isSelected ? ' is-delete-selected' : '');
       li.setAttribute('data-id', item.id);
       if (item.id === 'today') {
         li.innerHTML =
@@ -739,7 +839,9 @@
           '<span class="event-name">今日</span>' +
           '<span class="event-date">' + formatDateWithWeekday(item.date) + '</span>';
       } else {
+        var checkHtml = isSelectable ? '<input type="checkbox" class="event-item-delete-checkbox" aria-label="削除対象に選択" ' + (isSelected ? 'checked' : '') + '>' : '';
         li.innerHTML =
+          checkHtml +
           '<span class="event-interval ' + (info.isPast ? 'interval-past' : 'interval-future') + '">' + escapeHtml(intervalText) + '</span>' +
           '<span class="event-name">' + escapeHtml(item.name) + '</span>' +
           '<div class="event-item-row2">' +
@@ -749,22 +851,32 @@
           '<button type="button" class="event-delete" aria-label="削除">×</button>' +
           '</div>' +
           (item.description ? '<span class="event-description">' + escapeHtml(item.description) + '</span>' : '');
-        li.querySelector('.event-important-btn').addEventListener('click', function (e) {
-          e.stopPropagation();
-          toggleEventImportant(item.id);
-        });
-        li.querySelector('.event-edit-btn').addEventListener('click', function (e) {
-          e.stopPropagation();
-          openEditForm(item);
-        });
-        li.querySelector('.event-delete').addEventListener('click', function (e) {
-          e.stopPropagation();
-          showDeleteConfirm(item.id);
-        });
+        if (!isSelectable) {
+          li.querySelector('.event-important-btn').addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleEventImportant(item.id);
+          });
+          li.querySelector('.event-edit-btn').addEventListener('click', function (e) {
+            e.stopPropagation();
+            openEditForm(item);
+          });
+          li.querySelector('.event-delete').addEventListener('click', function (e) {
+            e.stopPropagation();
+            showDeleteConfirm(item.id);
+          });
+        }
+        if (isSelectable) {
+          var cb = li.querySelector('.event-item-delete-checkbox');
+          if (cb) cb.addEventListener('click', function (e) { e.stopPropagation(); toggleEventSelection(item.id); });
+        }
       }
       li.addEventListener('click', function (e) {
-        if (e.target.classList.contains('event-delete') || e.target.classList.contains('event-important-btn') || e.target.classList.contains('event-edit-btn')) return;
-        selectEvent(item.id);
+        if (e.target.classList.contains('event-delete') || e.target.classList.contains('event-important-btn') || e.target.classList.contains('event-edit-btn') || e.target.classList.contains('event-item-delete-checkbox')) return;
+        if (isSelectable) {
+          toggleEventSelection(item.id);
+        } else {
+          selectEvent(item.id);
+        }
       });
       eventList.appendChild(li);
     });
@@ -780,6 +892,9 @@
       emptyState.classList.remove('hidden');
     } else {
       emptyState.classList.add('hidden');
+    }
+    if (deleteSelectionMode && deleteSelectedCount) {
+      deleteSelectedCount.textContent = String(selectedEventIds.size);
     }
   }
 
@@ -1078,8 +1193,10 @@
   function openDrawer(contentPanel, titleText) {
     panelAdd.classList.remove('is-visible');
     panelRange.classList.remove('is-visible');
+    if (panelDelete) panelDelete.classList.remove('is-visible');
     panelAdd.setAttribute('aria-hidden', 'true');
     panelRange.setAttribute('aria-hidden', 'true');
+    if (panelDelete) panelDelete.setAttribute('aria-hidden', 'true');
     contentPanel.classList.add('is-visible');
     contentPanel.setAttribute('aria-hidden', 'false');
     if (drawerTitle) drawerTitle.textContent = titleText;
@@ -1098,10 +1215,37 @@
     }
     panelAdd.classList.remove('is-visible');
     panelRange.classList.remove('is-visible');
+    if (panelDelete) panelDelete.classList.remove('is-visible');
   }
   if (tabCalendar) tabCalendar.addEventListener('click', openCalendarOverlay);
   if (tabAdd) tabAdd.addEventListener('click', function () { resetAddForm(); toggleRecurrenceOptionsVisibility(); openDrawer(panelAdd, '予定を追加'); });
   if (tabRange) tabRange.addEventListener('click', function () { openDrawer(panelRange, '表示範囲'); });
+  if (tabDelete && panelDelete) tabDelete.addEventListener('click', function () { updateDeleteSelectionUI(); openDrawer(panelDelete, '予定の削除'); });
+
+  if (deleteAllBtn) deleteAllBtn.addEventListener('click', function () {
+    if (events.length === 0) return;
+    showBulkDeleteConfirm('all', {});
+  });
+  if (deleteRangeBtn && deleteRangeStart && deleteRangeEnd) deleteRangeBtn.addEventListener('click', function () {
+    var start = deleteRangeStart.value;
+    var end = deleteRangeEnd.value;
+    if (!start || !end) return;
+    var s = start <= end ? start : end;
+    var e2 = start <= end ? end : start;
+    var count = events.filter(function (e) { return e.date >= s && e.date <= e2; }).length;
+    if (count === 0) return;
+    showBulkDeleteConfirm('range', { start: s, end: e2 });
+  });
+  if (toggleSelectModeBtn) toggleSelectModeBtn.addEventListener('click', function () {
+    deleteSelectionMode = !deleteSelectionMode;
+    if (!deleteSelectionMode) selectedEventIds.clear();
+    updateDeleteSelectionUI();
+    renderList();
+  });
+  if (deleteSelectedBtn) deleteSelectedBtn.addEventListener('click', function () {
+    if (selectedEventIds.size === 0) return;
+    showBulkDeleteConfirm('selected', { ids: Array.from(selectedEventIds) });
+  });
   if (drawerBackBtn) drawerBackBtn.addEventListener('click', closeDrawer);
   if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeDrawer);
 
@@ -1110,10 +1254,16 @@
   if (deleteConfirmBackdrop) deleteConfirmBackdrop.addEventListener('click', hideDeleteConfirm);
   if (deleteConfirmCancel) deleteConfirmCancel.addEventListener('click', hideDeleteConfirm);
   if (deleteConfirmOk) deleteConfirmOk.addEventListener('click', function () {
-    if (pendingDeleteId) {
+    if (pendingDeleteMode === 'one' && pendingDeleteId) {
       removeEvent(pendingDeleteId);
-      hideDeleteConfirm();
+    } else if (pendingDeleteMode === 'all') {
+      removeAllEvents();
+    } else if (pendingDeleteMode === 'range' && pendingDeleteRange) {
+      removeEventsByRange(pendingDeleteRange.start, pendingDeleteRange.end);
+    } else if (pendingDeleteMode === 'selected' && pendingDeleteIds.length > 0) {
+      removeEventsByIds(pendingDeleteIds);
     }
+    hideDeleteConfirm();
   });
   if (calendarPrev) calendarPrev.addEventListener('click', function () {
     calendarMonth -= 1;
