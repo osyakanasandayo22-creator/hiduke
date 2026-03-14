@@ -1777,6 +1777,14 @@ select {
   .add-form {
     padding: 20px;
   }
+  /* スマホ：繰り返しの間隔を1行で表示（「1 週間ごと」と読めるように） */
+  .recurrence-interval-wrap {
+    flex-wrap: nowrap;
+  }
+  .recurrence-options select.input-period {
+    min-width: 0;
+    flex: 1;
+  }
   .form-row {
     flex-direction: column;
     align-items: stretch;
