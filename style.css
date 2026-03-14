@@ -90,6 +90,14 @@ body {
   line-height: 1.3;
   white-space: nowrap;
 }
+.top-bar-logo-img {
+  display: block;
+  height: 2rem;
+  width: auto;
+  max-width: 140px;
+  object-fit: contain;
+  object-position: left center;
+}
 .top-bar-search-area {
   flex: 1;
   min-width: 0;
@@ -1685,8 +1693,9 @@ body {
     gap: 0;
     box-sizing: content-box;
   }
-  .top-bar-logo {
-    font-size: 1.125rem;
+  .top-bar-logo-img {
+    height: 1.75rem;
+    max-width: 120px;
   }
   .top-bar-search-wrap {
     max-width: 160px;

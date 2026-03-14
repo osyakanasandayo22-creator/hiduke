@@ -1129,4 +1129,14 @@
   updateDateTriggerLabel();
   toggleRecurrenceEndInputs();
   renderList();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').then(function () {
+        // 登録成功
+      }).catch(function () {
+        // 登録失敗（開発時など）
+      });
+    });
+  }
 })();
