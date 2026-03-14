@@ -1,6 +1,6 @@
 {
-  "name": "日付間隔",
-  "short_name": "日付間隔",
+  "name": "TEMP",
+  "short_name": "TEMP",
   "description": "予定と日付の間隔を管理するアプリ",
   "start_url": "./index.html",
   "display": "standalone",
