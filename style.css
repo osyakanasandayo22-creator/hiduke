@@ -92,9 +92,9 @@ body {
 }
 .top-bar-logo-img {
   display: block;
-  height: 2rem;
+  height: 2.75rem;
   width: auto;
-  max-width: 140px;
+  max-width: 200px;
   object-fit: contain;
   object-position: left center;
 }
@@ -1694,8 +1694,8 @@ body {
     box-sizing: content-box;
   }
   .top-bar-logo-img {
-    height: 1.75rem;
-    max-width: 120px;
+    height: 2.25rem;
+    max-width: 160px;
   }
   .top-bar-search-wrap {
     max-width: 160px;
