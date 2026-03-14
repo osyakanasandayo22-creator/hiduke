@@ -16,6 +16,7 @@
   const eventDescriptionInput = document.getElementById('eventDescription');
   const eventRecurrenceCheck = document.getElementById('eventRecurrence');
   const recurrenceOptions = document.getElementById('recurrenceOptions');
+  const eventRecurrenceInterval = document.getElementById('eventRecurrenceInterval');
   const eventRecurrenceType = document.getElementById('eventRecurrenceType');
   const recurrenceEndDateRadio = document.getElementById('recurrenceEndDate');
   const recurrenceEndCountRadio = document.getElementById('recurrenceEndCount');
@@ -217,22 +218,24 @@
     if (recurrenceOptions) recurrenceOptions.setAttribute('aria-hidden', !open);
   }
 
-  /** 繰り返し開始日から終了条件に応じた日付の配列を返す（最大365件） */
+  /** 繰り返し開始日から終了条件に応じた日付の配列を返す（最大365件）。interval=間隔（1=毎日/毎週、2=2日ごと/2週間ごと…） */
   function getRecurringDates(startDateStr, type, endDateStr, maxCount) {
     const result = [];
     const start = new Date(startDateStr + 'T12:00:00');
     const limit = 365;
+    const interval = (eventRecurrenceInterval && parseInt(eventRecurrenceInterval.value, 10)) || 1;
+    const safeInterval = Math.max(1, Math.min(99, interval));
     let current = new Date(start.getTime());
-    const addDay = function () { current.setDate(current.getDate() + 1); };
-    const addWeek = function () { current.setDate(current.getDate() + 7); };
+    const addDay = function () { current.setDate(current.getDate() + safeInterval); };
+    const addWeek = function () { current.setDate(current.getDate() + safeInterval * 7); };
     const addMonth = function () {
       const day = current.getDate();
       current.setDate(1);
-      current.setMonth(current.getMonth() + 1);
+      current.setMonth(current.getMonth() + safeInterval);
       const lastDay = new Date(current.getFullYear(), current.getMonth() + 1, 0).getDate();
       current.setDate(Math.min(day, lastDay));
     };
-    const addYear = function () { current.setFullYear(current.getFullYear() + 1); };
+    const addYear = function () { current.setFullYear(current.getFullYear() + safeInterval); };
     const add = type === 'daily' ? addDay : type === 'weekly' ? addWeek : type === 'monthly' ? addMonth : addYear;
 
     const toStr = function (d) {
@@ -297,6 +300,7 @@
     if (eventDescriptionInput) eventDescriptionInput.value = '';
     if (eventRecurrenceCheck) eventRecurrenceCheck.checked = false;
     if (recurrenceOptions) recurrenceOptions.setAttribute('aria-hidden', 'true');
+    if (eventRecurrenceInterval) eventRecurrenceInterval.value = '1';
     if (eventRecurrenceType) eventRecurrenceType.value = 'weekly';
     if (recurrenceEndDateRadio) recurrenceEndDateRadio.checked = true;
     if (eventRecurrenceEndDate) eventRecurrenceEndDate.value = '';
@@ -524,20 +528,25 @@
       cell.appendChild(document.createTextNode(''));
       datePickerGrid.appendChild(cell);
     }
+    const todayStr = getTodayDateStr();
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = pickerCurrentYear + '-' + String(pickerCurrentMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
       const w = new Date(pickerCurrentYear, pickerCurrentMonth, d).getDay();
       const holiday = getHoliday(dateStr);
       const isHoliday = !!holiday;
+      const isToday = dateStr === todayStr;
       const cell = document.createElement('button');
       cell.type = 'button';
       cell.className = 'date-picker-cell' +
         (w === 0 ? ' sunday' : w === 6 ? ' saturday' : '') +
         (isHoliday ? ' holiday' : '') +
+        (isToday ? ' today' : '') +
         (dateStr === selectedVal ? ' selected' : '');
       cell.setAttribute('data-date', dateStr);
       if (holiday) cell.setAttribute('title', holiday);
+      if (isToday) cell.setAttribute('title', (cell.getAttribute('title') ? cell.getAttribute('title') + ' ' : '') + '今日');
       cell.innerHTML = '<span class="date-picker-day">' + d + '</span>' +
+        (isToday ? '<span class="date-picker-today-label">今日</span>' : '') +
         (holiday ? '<span class="date-picker-holiday-name">' + escapeHtml(holiday) + '</span>' : '');
       cell.addEventListener('click', function () {
         eventDateInput.value = dateStr;
@@ -600,10 +609,12 @@
       refLi.innerHTML =
         '<span class="event-badge-ref">基準</span>' +
         '<span class="event-name">' + escapeHtml(ref.name) + '</span>' +
+        '<div class="event-item-row2">' +
         '<span class="event-date">' + formatDateWithWeekday(ref.date) + '</span>' +
         '<button type="button" class="event-important-btn" aria-label="' + (ref.important ? '重要（クリックで解除）' : '重要にする') + '">' + (ref.important ? '★' : '☆') + '</button>' +
         '<button type="button" class="event-edit-btn" aria-label="編集">✎</button>' +
         '<button type="button" class="event-delete" aria-label="削除">×</button>' +
+        '</div>' +
         (ref.description ? '<span class="event-description">' + escapeHtml(ref.description) + '</span>' : '');
       refLi.querySelector('.event-important-btn').addEventListener('click', function (e) {
         e.stopPropagation();
@@ -731,10 +742,12 @@
         li.innerHTML =
           '<span class="event-interval ' + (info.isPast ? 'interval-past' : 'interval-future') + '">' + escapeHtml(intervalText) + '</span>' +
           '<span class="event-name">' + escapeHtml(item.name) + '</span>' +
+          '<div class="event-item-row2">' +
           '<span class="event-date">' + formatDateWithWeekday(item.date) + '</span>' +
           '<button type="button" class="event-important-btn" aria-label="' + (item.important ? '重要（クリックで解除）' : '重要にする') + '">' + (item.important ? '★' : '☆') + '</button>' +
           '<button type="button" class="event-edit-btn" aria-label="編集">✎</button>' +
           '<button type="button" class="event-delete" aria-label="削除">×</button>' +
+          '</div>' +
           (item.description ? '<span class="event-description">' + escapeHtml(item.description) + '</span>' : '');
         li.querySelector('.event-important-btn').addEventListener('click', function (e) {
           e.stopPropagation();

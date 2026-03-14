@@ -613,9 +613,26 @@ select {
 .recurrence-options .form-label-optional {
   margin-top: 0;
 }
-.recurrence-options select.input-period {
+.recurrence-interval-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 14px;
-  width: 100%;
+}
+.recurrence-interval-wrap .input-interval {
+  width: 64px;
+  min-width: 64px;
+  text-align: center;
+}
+.recurrence-interval-unit-label {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+.recurrence-options select.input-period {
+  flex: 1;
+  min-width: 120px;
+  margin-bottom: 0;
 }
 .recurrence-end-wrap {
   display: flex;
@@ -821,6 +838,29 @@ select {
 .date-picker-cell.selected.holiday {
   background: var(--primary);
   color: #fff;
+}
+/* 今日の日付をわかりやすく表示 */
+.date-picker-cell.today {
+  font-weight: 700;
+  background: var(--primary-light);
+  color: var(--primary);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+.date-picker-cell.today.selected {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+.date-picker-today-label {
+  display: block;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1.2;
+  margin-top: 1px;
+}
+.date-picker-cell.today.selected .date-picker-today-label {
+  color: rgba(255, 255, 255, 0.95);
 }
 .date-picker-cell.empty {
   cursor: default;
@@ -1090,6 +1130,12 @@ select {
   color: var(--text);
   flex: 1;
   min-width: 0;
+}
+.event-item .event-item-row2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .event-item .event-date {
   font-size: 1rem;
@@ -1787,11 +1833,21 @@ select {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* スマホ：日付・重要・編集・削除を2行目に表示して予定名のスペースを確保 */
+  .event-item .event-item-row2 {
+    flex-basis: 100%;
+    width: 100%;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    gap: 10px;
+  }
   .event-item .event-date {
     width: auto;
     order: 0;
     padding: 0;
     margin-top: 0;
+    margin-bottom: 0;
     border-top: none;
     font-size: 0.8125rem;
     flex-shrink: 0;

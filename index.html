@@ -67,13 +67,17 @@
                     <span>繰り返し予定にする</span>
                   </label>
                   <div class="recurrence-options" id="recurrenceOptions" aria-hidden="true">
-                    <label class="form-label-optional" for="eventRecurrenceType">繰り返し</label>
-                    <select id="eventRecurrenceType" class="input input-period">
-                      <option value="daily">毎日</option>
-                      <option value="weekly">毎週</option>
-                      <option value="monthly">毎月</option>
-                      <option value="yearly">毎年</option>
-                    </select>
+                    <label class="form-label-optional" for="eventRecurrenceInterval">繰り返し</label>
+                    <div class="recurrence-interval-wrap">
+                      <input type="number" id="eventRecurrenceInterval" class="input input-interval" min="1" max="99" value="1" aria-label="繰り返しの間隔">
+                      <span class="recurrence-interval-unit-label">ごとに</span>
+                      <select id="eventRecurrenceType" class="input input-period" aria-label="繰り返しの単位">
+                        <option value="daily">1日</option>
+                        <option value="weekly" selected>1週間</option>
+                        <option value="monthly">1ヶ月</option>
+                        <option value="yearly">1年</option>
+                      </select>
+                    </div>
                     <div class="recurrence-end-wrap">
                       <span class="option-label">終了</span>
                       <label class="option-radio">
