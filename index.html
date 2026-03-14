@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日付間隔</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- 固定トップバー（ロゴ・予定追加・表示範囲） -->
+    <nav class="top-bar-fixed" role="navigation" aria-label="メニュー">
+      <div class="top-bar-inner">
+        <div class="top-bar-row1">
+          <div class="top-bar-brand">
+            <h1 class="top-bar-logo">日付間隔</h1>
+          </div>
+          <div class="top-bar-search-area">
+            <div class="top-bar-search-wrap">
+              <input type="search" id="searchEvents" class="top-bar-search" placeholder="予定を検索" aria-label="予定を検索">
+            </div>
+          </div>
+        </div>
+        <div class="top-bar-tabs">
+          <button type="button" class="top-bar-tab" id="tabCalendar" aria-controls="calendarOverlay">カレンダー</button>
+          <button type="button" class="top-bar-tab" id="tabAdd" aria-controls="panelAdd">予定追加</button>
+          <button type="button" class="top-bar-tab" id="tabRange" aria-controls="panelRange">表示期間</button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main main-with-fixed-bar">
+      <!-- 右からスライドする変更画面（レイヤー） -->
+      <div class="drawer-overlay" id="drawerOverlay" aria-hidden="true">
+        <div class="drawer-backdrop" id="drawerBackdrop"></div>
+        <div class="drawer-panel" id="drawerPanel">
+          <header class="drawer-header">
+            <button type="button" class="drawer-back-btn" id="drawerBackBtn" aria-label="戻る">← 戻る</button>
+            <h2 class="drawer-title" id="drawerTitle"></h2>
+          </header>
+          <div class="drawer-body">
+            <!-- 予定追加 -->
+            <section class="drawer-content" id="panelAdd" aria-hidden="true">
+              <form class="add-form" id="addForm">
+                <div class="form-row">
+                  <input type="text" id="eventName" placeholder="予定名（例：旅行）" class="input input-name" required>
+                  <div class="date-trigger-wrap">
+                    <input type="date" id="eventDate" class="input-date-hidden" required>
+                    <button type="button" id="dateTrigger" class="input input-date-trigger" aria-haspopup="dialog" aria-expanded="false">日付を選択</button>
+                  </div>
+                  <button type="submit" class="btn btn-primary" id="addFormSubmit">追加</button>
+                </div>
+                <label class="form-label-optional" for="eventDescription">説明（任意）</label>
+                <textarea id="eventDescription" class="input input-description" placeholder="メモや詳細を入力" rows="3"></textarea>
+                <div class="form-recurrence-wrap">
+                  <label class="option-checkbox form-recurrence-toggle">
+                    <input type="checkbox" id="eventRecurrence" name="eventRecurrence" aria-controls="recurrenceOptions">
+                    <span>繰り返し予定にする</span>
+                  </label>
+                  <div class="recurrence-options" id="recurrenceOptions" aria-hidden="true">
+                    <label class="form-label-optional" for="eventRecurrenceType">繰り返し</label>
+                    <select id="eventRecurrenceType" class="input input-period">
+                      <option value="daily">毎日</option>
+                      <option value="weekly">毎週</option>
+                      <option value="monthly">毎月</option>
+                      <option value="yearly">毎年</option>
+                    </select>
+                    <div class="recurrence-end-wrap">
+                      <span class="option-label">終了</span>
+                      <label class="option-radio">
+                        <input type="radio" name="recurrenceEnd" value="date" id="recurrenceEndDate" checked>
+                        <span>日付で指定</span>
+                      </label>
+                      <div class="recurrence-end-date-wrap">
+                        <input type="date" id="eventRecurrenceEndDate" class="input input-date-range" aria-label="繰り返し終了日">
+                      </div>
+                      <label class="option-radio">
+                        <input type="radio" name="recurrenceEnd" value="count" id="recurrenceEndCount">
+                        <span>回数で指定</span>
+                      </label>
+                      <div class="recurrence-end-count-wrap" style="display: none;">
+                        <input type="number" id="eventRecurrenceCount" class="input input-count" min="2" max="365" value="10" aria-label="繰り返し回数">
+                        <span class="recurrence-count-unit">回</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </section>
+            <!-- 表示範囲（過ぎた予定を自動削除を含む） -->
+            <section class="drawer-content" id="panelRange" aria-hidden="true">
+              <div class="list-options">
+                <label class="option-checkbox">
+                  <input type="checkbox" id="autoDeletePast" name="autoDeletePast">
+                  <span>過ぎた予定を自動で削除する</span>
+                </label>
+                <div class="option-period">
+                  <span class="option-label">表示する期間：</span>
+                  <select id="displayPeriod" class="input input-period">
+                    <option value="week">今週</option>
+                    <option value="month" selected>今月</option>
+                    <option value="year">今年</option>
+                    <option value="all">全期間</option>
+                    <option value="range">範囲選択</option>
+                  </select>
+                  <div class="option-range" id="optionRange" aria-hidden="true">
+                    <input type="date" id="rangeStart" class="input input-date-range" aria-label="開始日">
+                    <span>～</span>
+                    <input type="date" id="rangeEnd" class="input input-date-range" aria-label="終了日">
+                  </div>
+                </div>
+                <div class="option-period option-interval-display">
+                  <span class="option-label">間隔の表示形式：</span>
+                  <div class="option-radio-group" role="group" aria-label="間隔の表示形式">
+                    <label class="option-radio">
+                      <input type="radio" name="intervalDisplay" value="week" id="intervalDisplayWeek" checked>
+                      <span>週間表示（例：2週間3日）</span>
+                    </label>
+                    <label class="option-radio">
+                      <input type="radio" name="intervalDisplay" value="days" id="intervalDisplayDays">
+                      <span>日数表示（例：17日）</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- カレンダー表示オーバーレイ（予定付き） -->
+      <div class="calendar-overlay" id="calendarOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="カレンダー">
+        <div class="calendar-overlay-backdrop" id="calendarBackdrop"></div>
+        <div class="calendar-overlay-box" id="calendarBox">
+          <div class="calendar-overlay-header">
+            <h2 class="calendar-overlay-title">カレンダー</h2>
+            <button type="button" class="btn-close" id="closeCalendar" aria-label="閉じる">×</button>
+          </div>
+          <div class="calendar-view-header">
+            <button type="button" class="calendar-nav" id="calendarPrev" aria-label="前の月">‹</button>
+            <span class="calendar-month-year" id="calendarMonthYear">2025年3月</span>
+            <button type="button" class="calendar-nav" id="calendarNext" aria-label="次の月">›</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span class="calendar-wday sunday">日</span>
+            <span class="calendar-wday">月</span>
+            <span class="calendar-wday">火</span>
+            <span class="calendar-wday">水</span>
+            <span class="calendar-wday">木</span>
+            <span class="calendar-wday">金</span>
+            <span class="calendar-wday saturday">土</span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <button type="button" class="btn calendar-close-btn" id="closeCalendarBtn">閉じる</button>
+        </div>
+      </div>
+
+      <!-- 間隔表示オーバーレイ（レイヤーで上にかぶせる） -->
+      <div class="interval-overlay" id="intervalSection" aria-hidden="true" role="dialog" aria-modal="true" aria-label="基準日から見た間隔">
+        <div class="interval-overlay-backdrop" id="intervalBackdrop"></div>
+        <div class="interval-overlay-box">
+          <!-- カード内固定トップバー：その予定のタイトル ＋ からの間隔 -->
+          <header class="interval-card-header">
+            <h2 class="interval-card-title" id="intervalTitle">基準日から見た間隔</h2>
+            <button type="button" class="btn-close" id="closeInterval" aria-label="閉じる">×</button>
+          </header>
+          <div class="interval-card-body">
+            <div class="interval-reference" id="intervalReference">
+              <!-- 基準日がここに表示 -->
+            </div>
+            <div class="interval-timeline" id="intervalTimeline">
+              <!-- タイムライン風の間隔表示 -->
+            </div>
+            <ul class="interval-list" id="intervalList">
+              <!-- 各予定との間隔がここに表示 -->
+            </ul>
+            <button type="button" class="btn interval-close-btn" id="closeIntervalBtn">閉じる</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- カレンダー日付選択（大きめ・土日色分け） -->
+      <div class="date-picker-overlay" id="datePickerOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="日付を選択">
+        <div class="date-picker-backdrop" id="datePickerBackdrop"></div>
+        <div class="date-picker-box" id="datePickerBox">
+          <div class="date-picker-header">
+            <button type="button" class="date-picker-nav" id="datePickerPrev" aria-label="前の月">‹</button>
+            <span class="date-picker-month-year" id="datePickerMonthYear">2025年3月</span>
+            <button type="button" class="date-picker-nav" id="datePickerNext" aria-label="次の月">›</button>
+          </div>
+          <div class="date-picker-weekdays">
+            <span class="date-picker-wday sunday">日</span>
+            <span class="date-picker-wday">月</span>
+            <span class="date-picker-wday">火</span>
+            <span class="date-picker-wday">水</span>
+            <span class="date-picker-wday">木</span>
+            <span class="date-picker-wday">金</span>
+            <span class="date-picker-wday saturday">土</span>
+          </div>
+          <div class="date-picker-grid" id="datePickerGrid"></div>
+          <button type="button" class="date-picker-close btn" id="datePickerClose">閉じる</button>
+        </div>
+      </div>
+
+      <!-- 予定削除確認モーダル（サイト内デザイン） -->
+      <div class="confirm-overlay" id="deleteConfirmOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle" aria-describedby="deleteConfirmMessage">
+        <div class="confirm-backdrop" id="deleteConfirmBackdrop"></div>
+        <div class="confirm-box" id="deleteConfirmBox">
+          <h2 class="confirm-title" id="deleteConfirmTitle">この予定を削除しますか？</h2>
+          <p class="confirm-message" id="deleteConfirmMessage">削除すると元に戻せません。</p>
+          <div class="confirm-actions">
+            <button type="button" class="btn btn-secondary" id="deleteConfirmCancel">キャンセル</button>
+            <button type="button" class="btn btn-danger" id="deleteConfirmOk">削除する</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ホーム：基準（今日 or 選択した予定）が先頭、以下に各カード＋基準との間隔 -->
+      <section class="list-section">
+        <p class="hint">先頭が基準です。予定をタップするとその予定が基準になり、各カードに基準からの間隔が表示されます</p>
+        <ul class="event-list" id="eventList">
+          <!-- 1件目＝基準（今日 or 選択した予定）、2件目以降＝各カード（基準との間隔表示付き） -->
+        </ul>
+        <div class="empty-state" id="emptyState">
+          <span class="empty-icon">📅</span>
+          <p>まだ予定がありません</p>
+          <p class="empty-sub">トップバーの「予定追加」から予定名と日付を追加してください</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>日付間隔アプリ</p>
+    </footer>
+    <!-- グラフの点タップ時に表示するツールチップ（スマホ用） -->
+    <div class="graph-tooltip" id="graphTooltip" aria-hidden="true" role="tooltip"></div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
