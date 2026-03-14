@@ -625,10 +625,6 @@ select {
   min-width: 64px;
   text-align: center;
 }
-.recurrence-interval-unit-label {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-}
 .recurrence-options select.input-period {
   flex: 1;
   min-width: 120px;
