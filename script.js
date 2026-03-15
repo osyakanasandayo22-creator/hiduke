@@ -451,6 +451,22 @@
     return (intervalDisplayDays && intervalDisplayDays.checked) ? 'days' : 'week';
   }
 
+  // 2つの予定間の間隔（絶対値）を、表示設定に応じたテキストにする
+  function formatBetweenInterval(aDateStr, bDateStr) {
+    var days = getDiffInDays(aDateStr, bDateStr);
+    var abs = Math.abs(days);
+    var mode = getIntervalDisplayMode();
+    if (abs === 0) return '同じ日';
+    if (mode === 'days') {
+      return abs + '日';
+    }
+    var weeks = Math.floor(abs / 7);
+    var d = abs % 7;
+    if (weeks > 0 && d > 0) return weeks + '週間' + d + '日';
+    if (weeks > 0) return weeks + '週間';
+    return d + '日';
+  }
+
   function formatInterval(days, displayMode) {
     if (days === 0) return { text: '同じ日', weeks: 0, days: 0, isPast: false, totalDays: 0 };
     const isPast = days < 0;
@@ -821,6 +837,8 @@
       eventList.appendChild(timelineWrap);
     }
 
+    var prevBetween = { id: ref.id, date: ref.date, name: ref.id === 'today' ? '今日' : ref.name };
+
     others.forEach(function (item) {
       var w = getWeekdayIndex(item.date);
       var holiday = getHoliday(item.date);
@@ -830,6 +848,18 @@
       var intervalText = info.text;
       var isSelectable = deleteSelectionMode && item.id !== 'today';
       var isSelected = selectedEventIds.has(item.id);
+
+      // 直前の予定カードとの間隔表示（例：美容院 ← 3日 → 誕生日）
+      if (prevBetween && prevBetween.date !== item.date) {
+        var betweenLi = document.createElement('li');
+        betweenLi.className = 'event-between';
+        var betweenText = formatBetweenInterval(prevBetween.date, item.date);
+        var leftName = prevBetween.id === 'today' ? '今日' : prevBetween.name;
+        var rightName = item.id === 'today' ? '今日' : item.name;
+        betweenLi.textContent = leftName + ' ← ' + betweenText + ' → ' + rightName;
+        eventList.appendChild(betweenLi);
+      }
+
       var li = document.createElement('li');
       li.className = 'event-item' + wdayClass + (item.important ? ' is-important' : '') + (isSelectable ? ' delete-selectable' : '') + (isSelected ? ' is-delete-selected' : '');
       li.setAttribute('data-id', item.id);
@@ -879,6 +909,8 @@
         }
       });
       eventList.appendChild(li);
+
+      prevBetween = { id: item.id, date: item.date, name: item.id === 'today' ? '今日' : item.name };
     });
 
     if (searchQuery && others.length === 0) {
